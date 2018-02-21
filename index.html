@@ -14,13 +14,20 @@
 <body>
 
     <div class="container">
-        <div class="jumbotron">
-            <h1 class="display-4">Sorting Hat</h1>
-            <p class="lead">
-                Find out what house you would be sorted in!
-            </p>
+        <div class="jumbotron mb-0 p-4">
+            <div class="row">
+                <div class="col-md-6 py-3">
+                    <h1 class="display-4">Sorting Hat</h1>
+                    <p class="lead">
+                        Find out what house you would be sorted in!
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <img class="rounded mx-auto d-block img-thumbnail" style="height: 150px;" src="images/hat.jpg" alt="sorting_hat">
+                </div>
+            </div>
             <hr class="my-4">
-            <p class="lead">
+            <p class="lead pt-2">
                 <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#sorting_modal">Get Started!</button>
             </p>
         </div>
@@ -93,7 +100,7 @@
         var audio = new Audio(`audio/${data['house']}.wav`);
         audio.play();
         while (!audio.ended) {
-            await sleep(1000);
+            await sleep(500);
         }
 
         display_image(data);
@@ -163,8 +170,8 @@
 
     }
 
-    function duplicate_name( name ) {
-        return $('td.student_name').text().includes( name );
+    function duplicate_name(name) {
+        return $('td.student_name').text().includes(name);
     }
 
     function validate_age() {
