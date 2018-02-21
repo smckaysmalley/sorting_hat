@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sorting Hat</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <script src="assets/js/jquery-3.3.1.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="jumbotron">
+            <h1 class="display-4">Sorting Hat</h1>
+            <p class="lead">
+                Find out what house you would be sorted in!
+            </p>
+            <hr class="my-4">
+            <p class="lead">
+                <button class="btn btn-primary btn-lg" type="button" data-toggle="modal" data-target="#sorting_modal">Get Started!</button>
+            </p>
+        </div>
+
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">House</th>
+                </tr>
+            </thead>
+            <tbody id="house_results">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="sorting_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-large" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="display: none;">
+                    <h5 class="modal-title" id="house_name"></h5>
+                </div>
+                <div class="modal-body">
+                    <form id="sort_form">
+                        <div class="form-group">
+                            <label for="inputname">Name</label>
+                            <small id="nameHelp" class="form-text text-muted">What is your name?</small>
+                            <input type="text" class="form-control" id="inputname" aria-describedby="nameHelp" placeholder="First Last" onchange="validate_name();">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputage">Age</label>
+                            <small id="ageHelp" class="form-text text-muted">How old are you?</small>
+                            <input type="text" class="form-control" id="inputage" aria-describedby="ageHelp" placeholder="Age" onchange="validate_age();">
+                        </div>
+                    </form>
+                    <div class="house_image_conatiner"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="close_sort" style="display: none;" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" id="sort_me" class="btn btn-primary" onclick="find_house();">Sort Me!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    HOUSES = ['gryffindor', 'hufflepuff', 'ravenclaw', 'slytherin'];
+
+    function find_house() {
+        name = validate_name();
+        age = validate_age();
+        if (!name || !age) {
+            return false
+        }
+        var house = HOUSES[Math.floor((Math.random() * 4))];
+        disable_sort(true);
+
+        data = {
+            name: name,
+            age: age,
+            house: house
+        }
+
+        play_audio(data);
+    }
+
+    async function play_audio(data) {
+        var audio = new Audio(`audio/${data['house']}.wav`);
+        audio.play();
+        while (!audio.ended) {
+            await sleep(1000);
+        }
+
+        display_image(data);
+    }
+
+    function display_image(data) {
+        data['house_name'] = data['house'].charAt(0).toUpperCase() + data['house'].slice(1).toLowerCase();
+        var speed = 500;
+        var img = $('<img id="house_image" />');
+
+        img.attr('src', `images/${data['house']}.png`);
+        $(img).css('width', '50%');
+        $(img).addClass('rounded mx-auto d-block');
+        $(img).hide();
+        $('h5#house_name').html(data['house_name']);
+
+        $('div.house_image_conatiner').append(img);
+
+        $('form#sort_form').slideUp(speed);
+        $('div.modal-header').slideDown(speed);
+        $(img).fadeIn(speed);
+        $('button#close_sort').fadeIn(speed);
+        $('button#sort_me').fadeOut(speed);
+
+        add_to_table(data);
+    }
+
+    function add_to_table(data) {
+        var new_row = $(`<tr><td class="student_name">${data['name']}</td><td>${data['house_name']}</td></tr>`);
+        $('tbody#house_results').append(new_row);
+    }
+
+    // Reset the modal
+    $('div#sorting_modal').on('hidden.bs.modal', function (e) {
+        $('img#house_image').remove();
+        $('button#close_sort').hide();
+        $('div.modal-header').hide();
+
+        disable_sort(false);
+        reset_color($('input#inputname'));
+        reset_color($('input#inputage'));
+
+        $('button#sort_me').show();
+        $('form#sort_form').show();
+        $('input#inputname').val('');
+        $('input#inputage').val('');
+    });
+
+    function validate_name() {
+        var name = $('input#inputname').val().trim();
+        var name_array = name.split(' ').filter(function (v) {
+            return v !== ''
+        });
+        name = name_array.join(' ').replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+
+        if (name_array.length != 2 || duplicate_name(name)) {
+            disable_sort(true);
+            set_red($('input#inputname'))
+            return false;
+        } else {
+            disable_sort(false);
+            set_green($('input#inputname'));
+            return name;
+        }
+
+    }
+
+    function duplicate_name( name ) {
+        return $('td.student_name').text().includes( name );
+    }
+
+    function validate_age() {
+        var age = +$('input#inputage').val();
+
+        if (isNaN(age) || age < 1 || age > 120) {
+            disable_sort(true);
+            set_red($('input#inputage'));
+            return false;
+        } else {
+            disable_sort(false);
+            set_green($('input#inputage'));
+            return age;
+        }
+    }
+
+    function disable_sort(boolean) {
+        $('button#sort_me').prop('disabled', boolean)
+    }
+
+    function set_green(element) {
+        $(element).css('border-color', 'forestgreen');
+    }
+
+    function set_red(element) {
+        $(element).css('border-color', 'crimson');
+    }
+
+    function reset_color(element) {
+        $(element).css('border-color', '');
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+
+</html>
